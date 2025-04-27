@@ -26,6 +26,9 @@ gender-cue-integration-MT/
 └── README.md
 ```
 
+Attribution scores are saved in json files under data/attribution_scores/attention/[model]/
+
+
 
 ## How to run
 ### MPA
@@ -50,6 +53,7 @@ python scripts/mpa.py \
   ```
 
 Replace [model] with your model name (e.g., opus, nllb, mbart), [suffix] with a custom code (e.g., _reg, _pro, _anti based on the dataset used)
+Attribution scores are saved in json files under data/attribution_scores/attention/[model]/
 
 
   

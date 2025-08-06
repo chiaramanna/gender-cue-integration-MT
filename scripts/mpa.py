@@ -25,24 +25,29 @@ if __name__ == "__main__":
     parser.add_argument("--model_name", required=True, help="Model name (used to name output file)")
     args = parser.parse_args()
 
+    # indices to exclude (sentences don't follow the minimal pairs requirements)
+    excluded_indices = {1569, 1572}
+
     with open(args.pro_indices, 'r') as f:
-        pro_indices = set(json.load(f)["correct_indices"])
+        pro_indices = set(json.load(f)["correct_indices"]) - excluded_indices
     with open(args.anti_indices, 'r') as f:
-        anti_indices = set(json.load(f)["correct_indices"])
+        anti_indices = set(json.load(f)["correct_indices"]) - excluded_indices
     with open(args.meta_file, 'r') as f:
         meta_lines = [line.strip().split('\t') for line in f]
 
     # MPA (intersection of correct predictions in Pro and Anti)
     common_indices = sorted(pro_indices & anti_indices)
-    total_pairs = 1584  # fixed to size of WinoMT Pro/Anti sets
-    
+
+    # Adjust total number of minimal pairs by removing excluded ones
+    total_pairs = 1584 - len(excluded_indices)
+
     output_file = f"data/metrics/{args.model_name}_mpa.txt"
     with open(output_file, 'w') as out:
         out.write("Minimal Pair Accuracy (MPA)\n")
         out.write("Percentage of minimal pairs where the model correctly disambiguates gender in both Pro-S and Anti-S variants.\n\n")
         out.write(f"MPA: {len(common_indices)} / {total_pairs} = {len(common_indices)/total_pairs:.2%}\n\n")
 
-        # gender distribution: how many correctly disambiguated pairs are Pro-F vs. Pro-M (the profession is associated with M or F)
+        # gender distribution: how many correctly disambiguated pairs are Pro-F vs. Pro-M
         gender_counts = Counter()
         for idx in common_indices:
             if len(meta_lines[idx]) > 3:
@@ -50,10 +55,12 @@ if __name__ == "__main__":
                 gender_counts[gender] += 1
 
         total_common = sum(gender_counts.values())
-        out.write("Gender Distribution in accurately disambiguated pairs:")
-        out.write("Pro-F: stereotypically female professions")
-        out.write("Pro-M: stereotypically male professions")
+        out.write("Gender Distribution in accurately disambiguated pairs:\n")
+        out.write("Pro-F: stereotypically female professions\n")
+        out.write("Pro-M: stereotypically male professions\n")
         for gender in ['female', 'male']:
             percent = (gender_counts[gender] / total_common * 100) if gender in gender_counts else 0
             label = "Pro-F" if gender == "female" else "Pro-M"
-            out.write(f"{label}: {percent:.2f}%")
+            out.write(f"{label}: {percent:.2f}%\n")
+
+
